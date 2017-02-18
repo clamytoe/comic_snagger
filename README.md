@@ -11,4 +11,4 @@ You will need to have mechanize and BeautifulSoup in order to use. It's still us
 You will need to provide the `local_dir` for where you want your comics to be saved. Then all you have to do is provide the `base_url` for the comic that you want to download. I've left some examples in the script.
 
 ## NOTE
-If you stop a download or your connection drops, check the last image. More than likely you will have to remove it if it didn't download completely. You can tell if there is nothing butblack towards to bottom of the image. If you re-run the script on the same comic, it will resume where it left off or download any new comics if you maintain the established file structure.
+If you stop a download or your connection drops, check the last image. More than likely you will have to remove it if it didn't download completely. You can tell if there is nothing but black towards to bottom of the image. If you re-run the script on the same comic, it will resume where it left off or download any new comics if you maintain the established file structure.
