@@ -2,100 +2,103 @@
 """
 Scrape http://readcomicbooksonline.net for comic book images
 """
-import shutil
+import json
 import os
+import random
+import requests
+import shutil
+import time
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
+from sys import exit
 
 
-def init_browser():
-    """
-    Initialize the browser object with all of its needed options
-    """
-    browser = webdriver.Firefox()
-
-    return browser
-
-
-def scrape_chapters(soup):
+def scrape_chapters(base_url, main_title):
     """
     Scrape the title and url of all the chapters in the page
     """
-    chapter_soup = soup
-    # chapters = chapter_soup.find_all(class_='ch-name')
-    chapters = chapter_soup.find_all(class_='chapter-title-rtl')
-    total_chapters = len(chapters)
-    comic = {}
-    
-    for x in range(total_chapters):
-        title = chapters[x].contents[0]
-        link = chapters[x]['href'] + '/full'
-        img = []
-        comic[x] = [title, link, img]
+    soup = None
+
+    # Try to retrieve the list of chapters
+    try:
+        page = requests.get(base_url)
+        print('Processing: {}...'.format(main_title))
+        soup = BeautifulSoup(page.content, 'html.parser')
+        page.close()
+    except requests.exceptions.ConnectionError:
+        print('You must be connected to the Internet in order for this to work...')
+        quit()
+
+    chapters = soup.find_all(class_='chapter-title-rtl')
+    comic = []
+
+    for chapter in chapters:
+        title = chapter.contents[1].text
+        link = chapter.contents[1]['href']
+        comic.append([title, link])
 
     return comic
 
 
-def scrape_links(data):
+def scrape_links(url):
     """
     Scrape links pointing to the comic book chapters
     """
-    page = BeautifulSoup(data)
+    images = []
+    counter = 0
 
-    images = page.find_all(class_='chapter_img')
-    image_links = []
+    while True:
+        counter += 1
+        page = requests.get('{0}/{1}'.format(url, counter))
+        soup = BeautifulSoup(page.content, 'html.parser')
+        try:
+            alert = soup.find(class_='alert alert-info').find('p').text
+            if alert:
+                return images
+        except AttributeError:
+            images.append(soup.find(class_='img-responsive scan-page')['src'])
 
-    for img in images:
-        image_links.append(img['src'])
 
-    return image_links
-
-
-def download_image(local_dir, title, directory, images):
+def download_image(local_dir, main_title, comicbooks):
     """
     Retrieve and save all of the images
     """
-    browser = init_browser()
-    title_dir = os.path.join(local_dir, title)
-    comic_dir = os.path.join(title_dir, directory)
-    print('\nProcessing: {}...'.format(directory))
+    for comic in comicbooks.keys():
+        title_dir = os.path.join(local_dir, main_title)
+        comic_dir = os.path.join(title_dir, comic)
+        print('\nProcessing: {}...'.format(comic))
 
-    # Create the main directory for our title
-    try:
-        os.makedirs(title_dir)
-    except OSError:
-        pass
+        # Create the main directory for our title
+        try:
+            os.makedirs(title_dir)
+        except OSError:
+            pass
 
-    if not os.path.isfile(comic_dir + '.cbz'):
-        for img in images:
-            page = img.split('/')[-1]
-            num, ext = page.split('.')
+        if not os.path.isfile(comic_dir + '.cbz'):
+            for img in comicbooks[comic]:
+                image = img.split('/')[-1]
+                num, ext = image.split('.')
 
-            # Pad the number with a zero
-            if int(num) < 10:
-                num = '0' + str(num)
-            page = num + '.' + ext
-            filename = os.path.join(comic_dir, page)
-            try:
-                os.makedirs(comic_dir)
-            except OSError:
-                pass
-
-            if not os.path.isfile(filename):
-                print('\tSaving: {}'.format(filename))
+                # Pad the number with a zero
+                if int(num) < 10 and len(num) == 1:
+                    num = '0' + str(num)
+                    image = num + '.' + ext
+                filename = os.path.join(comic_dir, image)
+                try:
+                    os.makedirs(comic_dir)
+                except OSError:
+                    pass
 
                 try:
-                    browser.retrieve(img, filename)
+                    cmd = 'wget --no-verbose --show-progress -c {0} -O "{1}"'.format(img, filename)
+                    # print(' Command: {}'.format(cmd))
+                    os.system(cmd)
                 except KeyboardInterrupt:
                     print('\nDownload interrupted by the user.')
                     quit()
-            else:
-                print('\tFile: {} already exists, skipping'.format(page))
 
-        compress_comic(comic_dir)
-    else:
-        print('"{}" already exists, skipping'.format(comic_dir.split('/')[-1]))
+            compress_comic(comic_dir)
+        else:
+            print('"{}" already exists, skipping'.format(comic_dir.split('/')[-1]))
 
 
 def compress_comic(comic_dir):
@@ -110,6 +113,15 @@ def compress_comic(comic_dir):
     else:
         print('\nInvalid directory path was given:\n\t {}'.format(comic_dir))
         quit()
+
+
+def save(dir, title, object):
+    """
+    Takes a directory path and a dictionary object and dumps it to a json file
+    """
+    comic_log = os.path.join(dir, title)
+    with open('{}.json'.format(comic_log), 'w') as f:
+        json.dump(object, f)
 
 
 def main():
@@ -139,43 +151,38 @@ def main():
     base_url = 'http://readcomics.website/comic/the-walking-dead-2003'
 
     # Extract the title from the url
-    title = ((base_url.split('/')[-1]).replace('-', ' ')).title()
-    browser = init_browser()
-    soup = None
+    main_title = ((base_url.split('/')[-1]).replace('-', ' ')).title()
 
-    # Try to retrieve the list of chapters
-    try:
-        page = browser.open(base_url)
-        print('Processing: {}...'.format(title))
-        soup = BeautifulSoup(page)
-        page.close()
-    except:
-        print('You must be connected to the Internet in order for this to work...')
-        quit()
+    comic_log = '{}.json'.format(main_title)
+    comic_log = os.path.join(local_dir, comic_log)
+    print('Looking for cached file: {}'.format(comic_log))
 
-    # Scrape chapters in the main page
-    comics = scrape_chapters(soup)
-    total = len(comics)
-    print('Found: {} chapters'.format(total))
-    print('Collecting image data...')
+    if not os.path.isfile(comic_log):
+        # Scrape chapters in the main page
+        chapters = scrape_chapters(base_url, main_title)
 
-    # Scrape images in linked pages
-    for i in range(total):
-        data = browser.open(comics[i][1])
-        comics[i][2] = scrape_links(data)
+        print('Found: {} comics'.format(len(chapters)))
+        print('Collecting image data...')
+        combined_total = 0
+        comicbooks = {}
 
-    # Display the name of the comic along with how many images it contains
-    combined_total = 0
-    for x in range(total):
-        page_count = len(comics[x][2])
-        combined_total += page_count
-        print('\t{0}: {1} images'.format(comics[x][0], page_count))
+        # Scrape images in linked pages
+        for chapter in chapters:
+            comicbooks[chapter[0]] = scrape_links(chapter[1])
+            # Display the name of the comic along with how many images it contains
+            page_count = len(comicbooks[chapter[0]])
+            combined_total += page_count
+            print('  {0} has {1} pages'.format(chapter[0], page_count))
 
-    print('Total images to be processed: {}'.format(combined_total))
+        print('Total images to be processed: {}'.format(combined_total))
+
+        save(local_dir, main_title, comicbooks)
+    else:
+        with open(comic_log, 'r') as f:
+            comicbooks = json.load(f)
 
     # Download all of the images for each comic
-    for y in range(total):
-        download_image(local_dir, title, comics[y][0], comics[y][2])
+    download_image(local_dir, main_title, comicbooks)
 
     print('\nAll comics have been retrieved and compiled.')
 
