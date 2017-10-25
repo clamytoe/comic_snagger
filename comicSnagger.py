@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Scrape readcomics.net for comic book images
+Scrape http://readcomicbooksonline.net for comic book images
 """
 import mechanize
 import shutil
@@ -26,7 +26,8 @@ def scrape_chapters(soup):
     Scrape the title and url of all the chapters in the page
     """
     chapter_soup = soup
-    chapters = chapter_soup.find_all(class_='ch-name')
+    # chapters = chapter_soup.find_all(class_='ch-name')
+    chapters = chapter_soup.find_all(class_='chapter-title-rtl')
     total_chapters = len(chapters)
     comic = {}
 
@@ -119,14 +120,14 @@ def main():
     Get the comic's main page and follow the links
     to get all of the chapters that are available
     """
-    local_dir = '/home/muribe/Downloads/Comics/'
+    local_dir = '/home/mohh/Downloads/Comics/'
 
     # Get main page and get links to all of the chapter pages
     # base_url = 'http://www.readcomics.tv/comic/amazing-spider-man-complete'
     # base_url = 'http://www.readcomics.tv/comic/lara-croft-and-the-frozen-omen-2015'
     # base_url = 'http://www.readcomics.tv/comic/star-trek'
     # base_url = 'http://www.readcomics.tv/comic/legendary-star-lord'
-    base_url = 'http://www.readcomics.tv/comic/star-wars'
+    # base_url = 'http://www.readcomics.tv/comic/star-wars'
     # base_url = 'http://www.readcomics.tv/comic/star-wars-knights-of-the-old-republic-2006'
     # base_url = 'http://www.readcomics.tv/comic/star-wars-darth-vader-and-the-ghost-prison'
     # base_url = 'http://www.readcomics.tv/comic/star-wars-darth-vader-and-the-ninth-assassin'
@@ -138,6 +139,7 @@ def main():
     # base_url = 'http://www.readcomics.tv/comic/star-wars-chewbacca-2004'
     # base_url = 'http://www.readcomics.tv/comic/injustice-gods-among-us-year-four'
     # base_url = 'http://www.readcomics.tv/comic/injustice-gods-among-us-year-five-2016'
+    base_url = 'http://readcomics.website/comic/the-walking-dead-2003'
 
     # Extract the title from the url
     title = ((base_url.split('/')[-1]).replace('-', ' ')).title()
