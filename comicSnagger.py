@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 """
-Scrape http://readcomicbooksonline.net for comic book images
+Scrape http://readcomics.website for comic book images
 """
 import json
 import os
-import random
 import requests
 import shutil
 import time
@@ -26,17 +25,17 @@ def scrape_chapters(base_url, main_title):
         page.close()
     except requests.exceptions.ConnectionError:
         print('You must be connected to the Internet in order for this to work...')
-        quit()
+        exit(1)
 
     chapters = soup.find_all(class_='chapter-title-rtl')
-    comic = []
+    comics = [[c.contents[1].next, c.contents[1]['href']] for c in chapters]
 
-    for chapter in chapters:
-        title = chapter.contents[1].text
-        link = chapter.contents[1]['href']
-        comic.append([title, link])
+    # for chapter in chapters:
+    #     title = chapter.contents[1].text
+    #     link = chapter.contents[1]['href']
+    #     comics.append([title, link])
 
-    return comic
+    return comics
 
 
 def scrape_links(url):
@@ -56,9 +55,10 @@ def scrape_links(url):
                 return images
         except AttributeError:
             images.append(soup.find(class_='img-responsive scan-page')['src'])
+        time.sleep(1)
 
 
-def download_image(local_dir, main_title, comicbooks):
+def download_images(local_dir, main_title, comicbooks):
     """
     Retrieve and save all of the images
     """
@@ -70,7 +70,7 @@ def download_image(local_dir, main_title, comicbooks):
         # Create the main directory for our title
         try:
             os.makedirs(title_dir)
-        except OSError:
+        except FileExistsError:
             pass
 
         if not os.path.isfile(comic_dir + '.cbz'):
@@ -79,22 +79,18 @@ def download_image(local_dir, main_title, comicbooks):
                 num, ext = image.split('.')
 
                 # Pad the number with a zero
-                if int(num) < 10 and len(num) == 1:
-                    num = '0' + str(num)
-                    image = num + '.' + ext
+                image = '{0}.{1}'.format(num.zfill(2), ext) if int(num) < 10 and len(num) == 1 else image
+                # if int(num) < 10 and len(num) == 1:
+                #     num = '0' + str(num)
+                #     image = num + '.' + ext
                 filename = os.path.join(comic_dir, image)
                 try:
                     os.makedirs(comic_dir)
-                except OSError:
+                except FileExistsError:
                     pass
 
-                try:
-                    cmd = 'wget --no-verbose --show-progress -c {0} -O "{1}"'.format(img, filename)
-                    # print(' Command: {}'.format(cmd))
-                    os.system(cmd)
-                except KeyboardInterrupt:
-                    print('\nDownload interrupted by the user.')
-                    quit()
+                cmd = 'wget --no-verbose --show-progress -c {0} -O "{1}"'.format(img, filename)
+                os.system(cmd)
 
             compress_comic(comic_dir)
         else:
@@ -112,52 +108,41 @@ def compress_comic(comic_dir):
         shutil.rmtree(comic_dir)
     else:
         print('\nInvalid directory path was given:\n\t {}'.format(comic_dir))
-        quit()
+        exit(2)
 
 
-def save(dir, title, object):
+def save(directory, title, object):
     """
     Takes a directory path and a dictionary object and dumps it to a json file
     """
-    comic_log = os.path.join(dir, title)
+    comic_log = os.path.join(directory, title)
     with open('{}.json'.format(comic_log), 'w') as f:
         json.dump(object, f)
 
 
 def main():
     """
-    Get the comic's main page and follow the links
-    to get all of the chapters that are available
+    Get the comic's main page and follow the links to get all of the chapters that are available
     """
     local_dir = '/home/mohh/Downloads/Comics/'
 
     # Get main page and get links to all of the chapter pages
-    # base_url = 'http://www.readcomics.tv/comic/amazing-spider-man-complete'
-    # base_url = 'http://www.readcomics.tv/comic/lara-croft-and-the-frozen-omen-2015'
-    # base_url = 'http://www.readcomics.tv/comic/star-trek'
-    # base_url = 'http://www.readcomics.tv/comic/legendary-star-lord'
-    # base_url = 'http://www.readcomics.tv/comic/star-wars'
-    # base_url = 'http://www.readcomics.tv/comic/star-wars-knights-of-the-old-republic-2006'
-    # base_url = 'http://www.readcomics.tv/comic/star-wars-darth-vader-and-the-ghost-prison'
-    # base_url = 'http://www.readcomics.tv/comic/star-wars-darth-vader-and-the-ninth-assassin'
-    # base_url = 'http://www.readcomics.tv/comic/star-wars-vader-down'
-    # base_url = 'http://www.readcomics.tv/comic/darth-vader'
-    # base_url = 'http://www.readcomics.tv/comic/obi-wan-and-anakin-2016'
-    # base_url = 'http://www.readcomics.tv/comic/lando'
-    # base_url = 'http://www.readcomics.tv/comic/chewbacca'
-    # base_url = 'http://www.readcomics.tv/comic/star-wars-chewbacca-2004'
-    # base_url = 'http://www.readcomics.tv/comic/injustice-gods-among-us-year-four'
-    # base_url = 'http://www.readcomics.tv/comic/injustice-gods-among-us-year-five-2016'
-    base_url = 'http://readcomics.website/comic/the-walking-dead-2003'
+    base_url = 'http://readcomics.website/comic/dungeons-dragons-frost-giants-fury-2017'
+
+    # Create the main directory for our title
+    try:
+        os.makedirs(local_dir)
+    except FileExistsError:
+        pass
 
     # Extract the title from the url
     main_title = ((base_url.split('/')[-1]).replace('-', ' ')).title()
 
-    comic_log = '{}.json'.format(main_title)
-    comic_log = os.path.join(local_dir, comic_log)
-    print('Looking for cached file: {}'.format(comic_log))
+    filename = '{}.json'.format(main_title)
+    comic_cache = os.path.join(local_dir, filename)
+    print('Looking for cached file: {}'.format(comic_cache))
 
-    if not os.path.isfile(comic_log):
+    if not os.path.isfile(comic_cache):
         # Scrape chapters in the main page
         chapters = scrape_chapters(base_url, main_title)
 
@@ -166,8 +151,9 @@ def main():
         combined_total = 0
         comicbooks = {}
 
-        # Scrape images in linked pages
+        # chapters contains lists consisting of [title, url]
         for chapter in chapters:
+            # Scrape images in linked pages
             comicbooks[chapter[0]] = scrape_links(chapter[1])
             # Display the name of the comic along with how many images it contains
             page_count = len(comicbooks[chapter[0]])
@@ -178,11 +164,11 @@ def main():
 
         save(local_dir, main_title, comicbooks)
     else:
-        with open(comic_log, 'r') as f:
+        with open(comic_cache, 'r') as f:
             comicbooks = json.load(f)
 
     # Download all of the images for each comic
-    download_image(local_dir, main_title, comicbooks)
+    download_images(local_dir, main_title, comicbooks)
 
     print('\nAll comics have been retrieved and compiled.')
 
