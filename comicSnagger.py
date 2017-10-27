@@ -11,16 +11,48 @@ from bs4 import BeautifulSoup
 from sys import exit
 
 
+def collect_image_data(chapters):
+    """
+    Scrapes the images for the comics
+    """
+    combined_total = 0
+    comicbooks = {}
+
+    # chapters contains lists consisting of [title, url]
+    for chapter in chapters:
+        title = chapter[0]
+        url = chapter[1]
+        # Scrape images in linked pages
+        comicbooks[title] = scrape_links(url)
+        # Display the name of the comic along with how many images it contains
+        page_count = len(comicbooks[title])
+        combined_total += page_count
+        print('  {0} has {1} pages'.format(title, page_count))
+
+    print('Total images to be processed: {}'.format(combined_total))
+
+    return comicbooks
+
+
+def exists(url):
+    """
+    Determines if the provided url exists
+    """
+    page = requests.head(url)
+    status = page.status_code
+    return True if status == requests.codes.ok else False
+
+
 def scrape_chapters(base_url, main_title):
     """
-    Scrape the title and url of all the chapters in the page
+    Scrape the title and url of all the comics in the page
     """
     soup = None
 
     # Try to retrieve the list of chapters
     try:
-        page = requests.get(base_url)
         print('Processing: {}...'.format(main_title))
+        page = requests.get(base_url)
         soup = BeautifulSoup(page.content, 'html.parser')
         page.close()
     except requests.exceptions.ConnectionError:
@@ -30,32 +62,39 @@ def scrape_chapters(base_url, main_title):
     chapters = soup.find_all(class_='chapter-title-rtl')
     comics = [[c.contents[1].next, c.contents[1]['href']] for c in chapters]
 
-    # for chapter in chapters:
-    #     title = chapter.contents[1].text
-    #     link = chapter.contents[1]['href']
-    #     comics.append([title, link])
-
     return comics
 
 
 def scrape_links(url):
     """
-    Scrape links pointing to the comic book chapters
+    Scrape links pointing to the comic book images
     """
     images = []
-    counter = 0
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    images.append(soup.find(class_='img-responsive scan-page')['src'].strip())
 
+    # to avoid multiple get requests, we're only going to check and see if the image exists
+    page_url, img_num = images[-1].rsplit('/', 1)
+    num, ext = img_num.split('.')
+    num = int(num)
+
+    # increase image number until the image is not found
     while True:
-        counter += 1
-        page = requests.get('{0}/{1}'.format(url, counter))
-        soup = BeautifulSoup(page.content, 'html.parser')
-        try:
-            alert = soup.find(class_='alert alert-info').find('p').text
-            if alert:
-                return images
-        except AttributeError:
-            images.append(soup.find(class_='img-responsive scan-page')['src'])
+        num += 1
+        img_num = str(num).zfill(2)
+        image_url = page_url + '/{0}.{1}'.format(img_num, ext)
+
+        # if image is found add it to the list otherwise break out of the loop
+        if exists(image_url):
+            images.append(image_url)
+        else:
+            break
+
+        # let's be nice and not hammer the server
         time.sleep(1)
+
+    return images
 
 
 def download_images(local_dir, main_title, comicbooks):
@@ -80,9 +119,6 @@ def download_images(local_dir, main_title, comicbooks):
 
                 # Pad the number with a zero
                 image = '{0}.{1}'.format(num.zfill(2), ext) if int(num) < 10 and len(num) == 1 else image
-                # if int(num) < 10 and len(num) == 1:
-                #     num = '0' + str(num)
-                #     image = num + '.' + ext
                 filename = os.path.join(comic_dir, image)
                 try:
                     os.makedirs(comic_dir)
@@ -111,13 +147,13 @@ def compress_comic(comic_dir):
         exit(2)
 
 
-def save(directory, title, object):
+def save(directory, title, dictionary):
     """
     Takes a directory path and a dictionary object and dumps it to a json file
     """
     comic_log = os.path.join(directory, title)
     with open('{}.json'.format(comic_log), 'w') as f:
-        json.dump(object, f)
+        json.dump(dictionary, f)
 
 
 def main():
@@ -127,7 +163,9 @@ def main():
     local_dir = '/home/mohh/Downloads/Comics/'
 
     # Get main page and get links to all of the chapter pages
-    base_url = 'http://readcomics.website/comic/dungeons-dragons-frost-giants-fury-2017'
+    # base_url = 'http://readcomics.website/comic/dungeons-dragons-frost-giants-fury-2017'
+    # base_url = 'http://readcomics.website/comic/guidebook-to-the-marvel-cinematic-universe-marvels-doctor-strange'
+    base_url = 'http://readcomics.website/comic/dollface-st-patricks-day-special-2017'
 
     # Create the main directory for our title
     try:
@@ -140,7 +178,6 @@ def main():
 
     filename = '{}.json'.format(main_title)
     comic_cache = os.path.join(local_dir, filename)
-    print('Looking for cached file: {}'.format(comic_cache))
 
     if not os.path.isfile(comic_cache):
         # Scrape chapters in the main page
@@ -148,22 +185,11 @@ def main():
 
         print('Found: {} comics'.format(len(chapters)))
         print('Collecting image data...')
-        combined_total = 0
-        comicbooks = {}
 
-        # chapters contains lists consisting of [title, url]
-        for chapter in chapters:
-            # Scrape images in linked pages
-            comicbooks[chapter[0]] = scrape_links(chapter[1])
-            # Display the name of the comic along with how many images it contains
-            page_count = len(comicbooks[chapter[0]])
-            combined_total += page_count
-            print('  {0} has {1} pages'.format(chapter[0], page_count))
-
-        print('Total images to be processed: {}'.format(combined_total))
-
+        comicbooks = collect_image_data(chapters)
         save(local_dir, main_title, comicbooks)
     else:
+        print('Found cached file: {}'.format(comic_cache))
         with open(comic_cache, 'r') as f:
             comicbooks = json.load(f)
 
