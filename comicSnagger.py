@@ -6,7 +6,6 @@ import json
 import os
 import requests
 import shutil
-import time
 from bs4 import BeautifulSoup
 from sys import exit
 
@@ -91,9 +90,6 @@ def scrape_links(url):
         else:
             break
 
-        # let's be nice and not hammer the server
-        time.sleep(1)
-
     return images
 
 
@@ -165,7 +161,8 @@ def main():
     # Get main page and get links to all of the chapter pages
     # base_url = 'http://readcomics.website/comic/dungeons-dragons-frost-giants-fury-2017'
     # base_url = 'http://readcomics.website/comic/guidebook-to-the-marvel-cinematic-universe-marvels-doctor-strange'
-    base_url = 'http://readcomics.website/comic/dollface-st-patricks-day-special-2017'
+    # base_url = 'http://readcomics.website/comic/dollface-st-patricks-day-special-2017'
+    base_url = 'http://readcomics.website/comic/my-little-pony-friendship-is-magic-2012'
 
     # Create the main directory for our title
     try:
