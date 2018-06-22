@@ -5,7 +5,7 @@ Scrape https://www.readcomics.io for comic book images
 import json
 import os
 import shutil
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from sys import exit
 
 import requests
