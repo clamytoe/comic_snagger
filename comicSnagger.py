@@ -4,10 +4,11 @@ Scrape http://readcomics.website for comic book images
 """
 import json
 import os
-import requests
 import shutil
-from bs4 import BeautifulSoup
 from sys import exit
+
+import requests
+from bs4 import BeautifulSoup
 
 
 def collect_image_data(chapters):
