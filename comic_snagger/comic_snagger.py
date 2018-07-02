@@ -12,6 +12,7 @@ from collections import namedtuple
 
 import requests
 from bs4 import BeautifulSoup
+from .headers import FIREFOX_LINUX
 from .log_init import setup_logging
 
 logger = setup_logging()
@@ -193,7 +194,7 @@ def get_soup(url):
     :param url: str - url of the page to soupify
     :return: BeautifulSoup - soup object of the page
     """
-    page = requests.get(url)
+    page = requests.get(url, headers=FIREFOX_LINUX)
     logger.info(f"Request status: {page.ok}")
     if page.ok:
         soup = BeautifulSoup(page.content, "html.parser")
@@ -252,5 +253,4 @@ def search(search_url):
 
 
 if __name__ == "__main__":
-    # logger.debug("Running as a module.")
     main()
