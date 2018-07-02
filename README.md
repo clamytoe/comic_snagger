@@ -1,14 +1,76 @@
-# comicSnagger
-Python script for downloading comics from [readcomics.io](https://www.readcomics.io). Once you provide the entry page for the comic that you want, it will download all of the chapters for it. At this time, it only downloads all of them but I plan to give you a choice between the ones that are available.
+# Comic Snagger (*comic_snagger*)
+> *Python script for downloading comic book images and converting them into a compressed comic book format.*
 
-## Backstory
-I wrote this script for my kids. I have limited bandwidth at home, so to prevent them each from reading them online at different times I decided to just download them once. 
+![Python version][python-version]
+[![Build Status][travis-image]][travis-url]
+[![BCH compliance][bch-image]][bch-url]
+[![GitHub issues][issues-image]][issues-url]
+[![GitHub forks][fork-image]][fork-url]
+[![GitHub Stars][stars-image]][stars-url]
+[![License][license-image]][license-url]
 
-## Requirements
-You will need to have **requests** and **BeautifulSoup** in order to use. It's written for Python 3, but it should work in 2 as well. I hope it's pretty self explanatory, but I do plan on writing a more proper Readme once I have more time.
+This app was generated with [Cookiecutter](https://github.com/audreyr/cookiecutter) along with [@clamytoe's](https://github.com/clamytoe) [toepack](https://github.com/clamytoe/toepack) project template.
 
-## How To Run
-You will need to provide the `local_dir` for where you want your comics to be saved. Then all you have to do is provide the `base_url` for the comic that you want to download. I've left an example in the script.
+Python script for downloading comics from [readcomics.io](https://www.readcomics.io). Run the script and respond to the prompts and it will download all of the images for the comic that you want.
 
-## NOTE
-At this time, there is no clean way to stop the script, so you must let it run its course.
+### Initial setup
+You will need to have **requests** and **BeautifulSoup4** in order to use. It's written for Python 3.6 because I love working with *f-strings* and its about time everyone upgraded.
+
+```bash
+cd Projects
+git clone https://github.com/clamytoe/comic_snagger.git
+cd comic_snagger
+```
+
+#### Anaconda setup
+```bash
+conda env create
+```
+
+#### Regular Python setup
+```bash
+pip install -r requirements.txt
+```
+
+#### Final setup
+```bash
+activate comic_snagger # or source activate comic_snagger
+pip install -e .
+```
+
+## Usage
+```bash
+comic_snagger
+```
+
+Once you've started downloading a comic, it will continue until it's done. If you stop it at any point, no need to worry. The script will continue where it left off. Just start the same comic once again and let it do its thing.
+
+## Contributing
+Contributions are very welcome. Tests can be run with with `pytest -v`, please ensure that all tests are passing before submitting a pull request. I have also included the following packages that should be used:
+* black
+* flake8
+* isort
+* pylint
+
+I am not adhering to them strictly, but try to clean up what's reasonable.
+
+## License
+Distributed under the terms of the [MIT](https://opensource.org/licenses/MIT) license, "comic_snagger" is free and open source software.
+
+## Issues
+If you encounter any problems, please [file an issue](https://github.com/clamytoe/toepack/issues) along with a detailed description.
+
+
+[python-version]:https://img.shields.io/badge/python-3.6.6-brightgreen.svg
+[travis-image]:https://travis-ci.org/clamytoe/comic_snagger.svg?branch=master
+[travis-url]:https://travis-ci.org/clamytoe/comic_snagger
+[bch-image]:https://bettercodehub.com/edge/badge/clamytoe/comic_snagger?branch=master
+[bch-url]:https://bettercodehub.com/
+[issues-image]:https://img.shields.io/github/issues/clamytoe/comic_snagger.svg
+[issues-url]:https://github.com/clamytoe/comic_snagger/issues
+[fork-image]:https://img.shields.io/github/forks/clamytoe/comic_snagger.svg
+[fork-url]:https://github.com/clamytoe/comic_snagger/network
+[stars-image]:https://img.shields.io/github/stars/clamytoe/comic_snagger.svg
+[stars-url]:https://github.com/clamytoe/comic_snagger/stargazers
+[license-image]:https://img.shields.io/github/license/clamytoe/comic_snagger.svg
+[license-url]:https://github.com/clamytoe/comic_snagger/blob/master/LICENSE
