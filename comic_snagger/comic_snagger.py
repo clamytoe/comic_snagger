@@ -12,6 +12,7 @@ from collections import namedtuple
 
 import requests
 from bs4 import BeautifulSoup
+
 from .headers import FIREFOX_LINUX
 from .log_init import setup_logging
 
@@ -35,7 +36,7 @@ def clear_screen():
     Clears the screen
     :return: None
     """
-    _ = os.system('cls' if os.name == 'nt' else 'clear')
+    _ = os.system('cls' if os.name == 'nt' else 'clear')  # nosec
 
 
 def compress_comic(title_dir):
@@ -78,7 +79,9 @@ def display_choice(search_term, comics):
         for i, comic in enumerate(comics):
             print(f" [{i}] {comic.title}")
         try:
-            choice = int(input(f"\nWhich one would you like to get? "))
+            choice = int(
+                input(f"\nWhich one would you like to get? ")  # nosec
+            )
             return comics[choice]
         except (ValueError, IndexError):
             clear_screen()
@@ -98,7 +101,7 @@ def display_comics(issues):
         print(f"\nThere {descriptive} {count} comic{plurality} available:")
         for i, chapter in enumerate(issues):
             print(f" [{i}] {chapter.title}")
-        choice = input("\nWhich one would you like? [ENTER] for all ")
+        choice = input("\nWhich one would you like? [ENTER] for all ")  # nosec
         if not choice:
             for chapter in issues:
                 download(chapter.title, chapter.url)
@@ -145,7 +148,7 @@ def download(title, url):
             )
             img = os.path.join(title_dir, image)
             cmd = f'wget --no-verbose --show-progress -c {link} -O "{img}"'
-            os.system(cmd)
+            os.system(cmd)  # nosec
         compress_comic(title_dir)
     else:
         print(f"{title_dir.split('/')[-1]}.cbz already exists, skipping.")
@@ -210,7 +213,7 @@ def main():
     """
     try:
         clear_screen()
-        search_term = input("Comic name: ")
+        search_term = input("Comic name: ")  # nosec
         url = SEARCH_URL + search_term.replace(" ", "+")
         comics = search(url)
         choice = display_choice(search_term, comics)
