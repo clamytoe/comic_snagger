@@ -196,7 +196,7 @@ def get_soup(url):
     """
     page = requests.get(url, headers=FIREFOX_LINUX)
     if page.ok:
-        soup = BeautifulSoup(page.content, "lxml")
+        soup = BeautifulSoup(page.content, "html.parser")
         return soup
 
     print("Something's gone wrong, sorry...")
