@@ -160,7 +160,6 @@ def get_comic(comic):
     """
     clear_screen()
     print(f"Retrieving: {comic.title}")
-    # logger.debug(f"Retrieving url: {comic.url}")
     soup = get_soup(comic.url)
 
     genres_ul = soup.find(class_="anime-genres")
