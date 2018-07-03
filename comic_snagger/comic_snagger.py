@@ -107,14 +107,8 @@ def display_comics(issues):
     :param issues: list - Comic(title, url) namedtuples
     :return: None
     """
-    count = len(issues)
-    descriptive, plurality = ("is", "") if count == 1 else ("are", "s")
-
     while True:
-        print(f"\nThere {descriptive} {count} comic{plurality} available:")
-        for i, chapter in enumerate(issues):
-            print(f" [{i}] {chapter.title}")
-        choice = input("\nWhich one would you like? [ENTER] for all ")  # nosec
+        choice = get_comic_choice(issues)
         if not choice:
             for chapter in issues:
                 download(chapter.title, chapter.url)
@@ -194,22 +188,44 @@ def get_comic(comic):
 
     desc_div = soup.find(class_="detail-desc-content")
     desc = desc_div.find("p").text.strip()
-    for line in desc.split("\n"):
-        blurb = textwrap.fill(line,
-                              initial_indent='  ',
-                              subsequent_indent=' ',
-                              width=WIDTH
-                              )
-        print(f"{blurb}")
+    print_description(desc)
 
     chapter_a = soup.find_all(class_="ch-name")
+    return generate_comics_found(chapter_a)
+
+
+def generate_comics_found(chapters):
+    """
+    Generates a list of Comic namedtuples.
+
+    :param chapters: BeautifulSoup - scraped chapter info
+    :return: list - containing Comic namedtuples
+    """
     issues = []
-    for link in chapter_a:
+    for link in chapters:
         title = link.text
         url = link["href"]
         issues.append(Comic(title, url))
 
     return issues
+
+
+def get_comic_choice(issues):
+    """
+    Gets the comic choice from the user.
+
+    It displays the comics that were found and asked the user to select one.
+
+    :param issues: list - containing Comic namedtuples
+    :return: str - input from the user
+    """
+    count = len(issues)
+    descriptive, plurality = ("is", "") if count == 1 else ("are", "s")
+
+    print(f"\nThere {descriptive} {count} comic{plurality} available:")
+    for i, chapter in enumerate(issues):
+        print(f" [{i}] {chapter.title}")
+    return input("\nWhich one would you like? [ENTER] for all ")  # nosec
 
 
 def get_links(url):
@@ -257,6 +273,22 @@ def main():
     except KeyboardInterrupt:
         print('\n\nProgram aborted by user. Exiting...\n')
         exit()
+
+
+def print_description(desc):
+    """
+    Displays the description of the comic.
+
+    :param desc: str - description of the comic book
+    :return: None
+    """
+    for line in desc.split("\n"):
+        blurb = textwrap.fill(line,
+                              initial_indent='  ',
+                              subsequent_indent=' ',
+                              width=WIDTH
+                              )
+        print(f"{blurb}")
 
 
 def search(search_url):
