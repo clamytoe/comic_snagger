@@ -160,7 +160,7 @@ def get_comic(comic):
     """
     clear_screen()
     print(f"Retrieving: {comic.title}")
-    logger.debug(f"Retrieving url: {comic.url}")
+    # logger.debug(f"Retrieving url: {comic.url}")
     soup = get_soup(comic.url)
 
     genres_ul = soup.find(class_="anime-genres")
@@ -195,9 +195,9 @@ def get_soup(url):
     :return: BeautifulSoup - soup object of the page
     """
     page = requests.get(url, headers=FIREFOX_LINUX)
-    logger.info(f"Request status: {page.ok}")
+    # logger.info(f"Request status: {page.ok}")
     if page.ok:
-        soup = BeautifulSoup(page.content, "html.parser")
+        soup = BeautifulSoup(page.content, "lxml")
         return soup
 
     print("Something's gone wrong, sorry...")
@@ -213,16 +213,16 @@ def main():
     try:
         clear_screen()
         search_term = input("Comic name: ")
-        logger.info(f"Search term: {search_term}")
+        # logger.info(f"Search term: {search_term}")
         url = SEARCH_URL + search_term.replace(" ", "+")
-        logger.info(f"Scraping url: {url}")
+        # logger.info(f"Scraping url: {url}")
         comics = search(url)
-        logger.info(f"Found: {len(comics)}")
+        # logger.info(f"Found: {len(comics)}")
         choice = display_choice(search_term, comics)
         issues = get_comic(choice)
         display_comics(issues)
     except KeyboardInterrupt:
-        logger.warn(f"Program aborted by user. Exiting...")
+        # logger.warn(f"Program aborted by user. Exiting...")
         print('\n\nProgram aborted by user. Exiting...\n')
         exit()
     # logger.info("Printing default message")
@@ -238,7 +238,7 @@ def search(search_url):
     comics = []
     try:
         term = search_url.split('=')[1].replace('+', ' ').title()
-        logger.info(f"Title: {term}")
+        # logger.info(f"Title: {term}")
         print(f"Searching for: {term}...")
         soup = get_soup(search_url)
         series = soup.find_all(class_="egb-serie")
