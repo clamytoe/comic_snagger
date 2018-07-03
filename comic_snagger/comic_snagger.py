@@ -57,6 +57,19 @@ def compress_comic(title_dir):
         exit(2)
 
 
+def create_dir(directory):
+    """
+    Creates a directory path if it does not exists.
+
+    :param directory: str - full path to the directory to create
+    :return: None
+    """
+    try:
+        os.makedirs(directory)
+    except FileExistsError:
+        pass
+
+
 def display_choice(search_term, comics):
     """
     Displays the comic book titles that were found.
@@ -130,28 +143,38 @@ def download(title, url):
     """
     title_dir = os.path.join(LOCAL_DIR, title)
     if not os.path.isfile(f"{title_dir}.cbz"):
-        try:
-            os.makedirs(title_dir)
-        except FileExistsError:
-            pass
+        create_dir(title_dir)
 
-        soup = get_soup(url+"/full")
-        images = soup.find_all(class_="chapter_img")
-        links = [link["src"] for link in images]
+        links = get_links(url)
         for link in links:
-            *_, image = link.split("/")
-            num, ext = image.split(".")
-            image = (
-                f"{num.zfill(2)}.{ext}"
-                if int(num) < 10 and len(num) == 1
-                else image
-            )
-            img = os.path.join(title_dir, image)
-            cmd = f'wget --no-verbose --show-progress -c {link} -O "{img}"'
+            cmd = generate_command(link, title_dir)
             os.system(cmd)  # nosec
         compress_comic(title_dir)
     else:
         print(f"{title_dir.split('/')[-1]}.cbz already exists, skipping.")
+
+
+def generate_command(link, directory):
+    """
+    Generates the wget command to retrieve the image.
+
+    It takes the url link and extracts the image file name. They are just
+    numbered, so any number under 10 gets padded with a leading 0 in order to
+    ensure that when the files are combined into the comic book format, they
+    stay in the correct order.
+
+    :param link: str - link to the image file
+    :param directory: the full path to save the image to
+    :return: str - the wget command to retrieve the image
+    """
+    num, ext = link.rsplit("/", 1)[1].split(".")
+    image = (
+        f"{num.zfill(2)}.{ext}"
+        if int(num) < 10 and len(num) == 1
+        else f"{num}.{ext}"
+    )
+    img = os.path.join(directory, image)
+    return f'wget --no-verbose --show-progress -c {link} -O "{img}"'
 
 
 def get_comic(comic):
@@ -187,6 +210,18 @@ def get_comic(comic):
         issues.append(Comic(title, url))
 
     return issues
+
+
+def get_links(url):
+    """
+    Parses the image links from the page.
+
+    :param url: str - the url for the comic
+    :return: list - containing the urls for the full images
+    """
+    soup = get_soup(url + "/full")
+    images = soup.find_all(class_="chapter_img")
+    return [link["src"] for link in images]
 
 
 def get_soup(url):
