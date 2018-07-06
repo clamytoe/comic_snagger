@@ -70,40 +70,10 @@ def create_dir(directory):
         pass
 
 
-def display_choice(search_term, comics):
-    """
-    Displays the comic book titles that were found.
-
-    If no match is found, the user is informed. Otherwise the comics found are
-    listed with an index number to the left. It will then ask the user for
-    their choice and the user is to enter the index number of the comic that
-    they want to retrieve.
-
-    :param search_term: str - title of comic entered by user
-    :param comics: list - containing Comic namedtuples
-    :return: namedtuple - Comic(title, url)
-    """
-    if not comics:
-        print(f"Sorry, did not find anything for {search_term}...")
-        exit()
-
-    while True:
-        print(f"Found {len(comics)} titles matching {search_term}")
-        for i, comic in enumerate(comics):
-            print(f" [{i}] {comic.title}")
-        try:
-            choice = int(
-                input(f"\nWhich one would you like to get? ")  # nosec
-            )
-            return comics[choice]
-        except (ValueError, IndexError):
-            clear_screen()
-            print(f"\n** {choice} is not a valid entry! **\n")
-
-
 def display_comics(issues):
     """
     Displays the comic book issues that were found.
+
     :param issues: list - Comic(title, url) namedtuples
     :return: None
     """
@@ -111,19 +81,62 @@ def display_comics(issues):
         choice = get_comic_choice(issues)
         if not choice:
             for chapter in issues:
-                download(chapter.title, chapter.url)
+                download_comic(chapter.title, chapter.url)
             break
         else:
             try:
                 choice = int(choice)
-                download(issues[choice].title, issues[choice].url)
+                download_comic(issues[choice].title, issues[choice].url)
                 break
             except (ValueError, IndexError):
                 clear_screen()
                 print(f"\n** {choice} is not a valid entry! **\n")
 
 
-def download(title, url):
+def display_genres(soup):
+    """
+    Displays the genres tags for the comic series.
+
+    :param soup: BeautifulSoup - soup object for the page.
+    :return: None
+    """
+    genres_ul = soup.find(class_="anime-genres")
+    genres = [f"[{g.text}]" for g in genres_ul.find_all("a")]
+    print(f"{' '.join(genres)}\n")
+
+
+def display_series_choices(search_term, series):
+    """
+    Displays the comic book titles that were found for the series.
+
+    If no match is found, the user is informed. Otherwise the comics found are
+    listed with an index number to the left. It will then ask the user for
+    their choice and the user is to enter the index number of the comic that
+    they want to retrieve.
+
+    :param search_term: str - title of comic entered by user
+    :param series: list - containing Comic namedtuples
+    :return: namedtuple - Comic(title, url)
+    """
+    if not series:
+        print(f"Was not able to find any titles for: {search_term}")
+        exit()
+
+    while True:
+        print(f"Found {len(series)} titles matching {search_term.title()}")
+        for i, comic in enumerate(series):
+            print(f" [{i}] {comic.title}")
+        try:
+            choice = int(
+                input(f"\nWhich one would you like to get? ")  # nosec
+            )
+            return series[choice]
+        except (ValueError, IndexError):
+            clear_screen()
+            print(f"\n** {choice} is not a valid entry! **\n")
+
+
+def download_comic(title, url):
     """
     Downloads the images for the comic.
 
@@ -139,7 +152,7 @@ def download(title, url):
     if not os.path.isfile(f"{title_dir}.cbz"):
         create_dir(title_dir)
 
-        links = get_links(url)
+        links = get_links(get_soup(url + "/full"))
         for link in links:
             cmd = generate_command(link, title_dir)
             os.system(cmd)  # nosec
@@ -171,43 +184,21 @@ def generate_command(link, directory):
     return f'wget --no-verbose --show-progress -c {link} -O "{img}"'
 
 
-def get_comic(comic):
+def scrape_chosen_comic(soup):
     """
     Scrapes the site for the given comic.
 
-    :param comic: Comic - namedtuple
-    :return: list - Comic(title, url) namedtuples
+    :param soup: BeautifulSoup - soup object for the page.
+    :return: BeautifulSoup - soup object with chapter information
     """
-    clear_screen()
-    print(f"Retrieving: {comic.title}")
-    soup = get_soup(comic.url)
-
-    genres_ul = soup.find(class_="anime-genres")
-    genres = [g.text for g in genres_ul.find_all("a")]
-    print(f"{' '.join(genres)}\n")
+    display_genres(soup)
 
     desc_div = soup.find(class_="detail-desc-content")
     desc = desc_div.find("p").text.strip()
     print_description(desc)
 
-    chapter_a = soup.find_all(class_="ch-name")
-    return generate_comics_found(chapter_a)
-
-
-def generate_comics_found(chapters):
-    """
-    Generates a list of Comic namedtuples.
-
-    :param chapters: BeautifulSoup - scraped chapter info
-    :return: list - containing Comic namedtuples
-    """
-    issues = []
-    for link in chapters:
-        title = link.text
-        url = link["href"]
-        issues.append(Comic(title, url))
-
-    return issues
+    chapters_soup = soup.find_all(class_="ch-name")
+    return chapters_soup
 
 
 def get_comic_choice(issues):
@@ -228,14 +219,13 @@ def get_comic_choice(issues):
     return input("\nWhich one would you like? [ENTER] for all ")  # nosec
 
 
-def get_links(url):
+def get_links(soup):
     """
     Parses the image links from the page.
 
-    :param url: str - the url for the comic
+    :param soup: BeautifulSoup - soup object for the comic
     :return: list - containing the urls for the full images
     """
-    soup = get_soup(url + "/full")
     images = soup.find_all(class_="chapter_img")
     return [link["src"] for link in images]
 
@@ -256,6 +246,22 @@ def get_soup(url):
     exit(1)
 
 
+def get_title_soup():
+    """
+    Searches the site for the title entered.
+
+    Returns a BeautifulSoup object for the search.
+
+    :return: tuple - search term and BeautifulSoup object
+    """
+    clear_screen()
+    search_term = input("Comic name: ")  # nosec
+    url = SEARCH_URL + search_term.replace(" ", "+")
+    clear_screen()
+    print(f"Searching for: {search_term.title()}...")
+    return search_term, search_for_series(get_soup(url))
+
+
 def main():
     """
     Main entry point into the program.
@@ -263,13 +269,14 @@ def main():
     :return: None
     """
     try:
+        search_term, series = get_title_soup()
+        chosen = display_series_choices(search_term, series)
+
         clear_screen()
-        search_term = input("Comic name: ")  # nosec
-        url = SEARCH_URL + search_term.replace(" ", "+")
-        comics = search(url)
-        choice = display_choice(search_term, comics)
-        issues = get_comic(choice)
-        display_comics(issues)
+        print(f"Retrieving: {chosen.title}")
+        issues = scrape_chosen_comic(get_soup(chosen.url))
+        chapters = scrape_comics_found(issues)
+        display_comics(chapters)
     except KeyboardInterrupt:
         print('\n\nProgram aborted by user. Exiting...\n')
         exit()
@@ -291,18 +298,31 @@ def print_description(desc):
         print(f"{blurb}")
 
 
-def search(search_url):
+def scrape_comics_found(issues_soup):
     """
-    Scrapes for the site at the given url.
+    Generates a list of Comic namedtuples.
 
-    :param search_url: str - the url to the search page
+    :param issues_soup: BeautifulSoup - scraped chapter info
+    :return: list - containing Comic namedtuples
+    """
+    issues = []
+    for link in issues_soup:
+        title = link.text
+        url = link["href"]
+        issues.append(Comic(title, url))
+
+    return issues
+
+
+def search_for_series(soup):
+    """
+    Scrapes for the soup object.
+
+    :param soup: BeautifulSoup - soupified search page
     :return: list - Comic(title, url) namedtuples
     """
     comics = []
     try:
-        term = search_url.split('=')[1].replace('+', ' ').title()
-        print(f"Searching for: {term}...")
-        soup = get_soup(search_url)
         series = soup.find_all(class_="egb-serie")
         for link in series:
             title = link.text
