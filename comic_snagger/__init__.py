@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from comic_snagger.comic_snagger import *
 
 __author__ = 'Martin Uribe'

@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+test_comic_snagger.py
+
+Test for comic_snagger.
+"""
 import os
 
 import pytest
