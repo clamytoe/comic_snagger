@@ -79,8 +79,7 @@ def test_scrape_comics_found(dt_comics):
 
 def test_display_genres(dt_comics, capfd):
     """Test the creation of the genres heading"""
-    expected = "[Ongoing] [Horror] [Marvel] [Graphic Novels] [Mature] " \
-               "[Mystery]\n\n"
+    expected = "[Ongoing] [Horror] [Marvel] [Graphic Novels] [Mature] [Mystery]\n\n"
     cs.display_genres(dt_comics)
     output = capfd.readouterr()[0]
     assert output == expected
@@ -97,8 +96,7 @@ def test_get_links(dt_images):
 
 def test_generate_command():
     """Test generate wget command function"""
-    link = "https://readcomics.io/images/manga/dark-tower-the-drawing-of-the" \
-           "-three-lady-of-shadows/1/1.jpg"
+    link = "https://readcomics.io/images/manga/dark-tower-the-drawing-of-the-three-lady-of-shadows/1/1.jpg"
     directory = "dark-tower-the-drawing-of-the-three-lady-of-shadows"
     command = cs.generate_command(link, directory)
     assert "wget" in command
