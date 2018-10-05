@@ -3,8 +3,9 @@ headers.py
 
 Sample headers to be used with requests
 """
+from typing import Dict
 
-IE = {
+IE: Dict[str, str] = {
     "Accept": "text/html, application/xhtml+xml, */*",
     "Accept-Language": "en-US",
     "Connection": "Keep-Alive",
@@ -12,7 +13,7 @@ IE = {
     "like Gecko",
 }
 
-FIREFOX_LINUX = {
+FIREFOX_LINUX: Dict[str, str] = {
     "Accept": "text/html, application/xhtml+xml, application/xml;q=0.9, " "*/*;q=0.8",
     "Accept-Language": "en-GB, en;q=0.5",
     "Connection": "keep-alive",
@@ -20,7 +21,7 @@ FIREFOX_LINUX = {
     "Gecko/20100101 Firefox/60.0",
 }
 
-CHROME_MOBILE = {
+CHROME_MOBILE: Dict[str, str] = {
     "Accept": "text/html.application/xhtml+xml, application/xml;q=0.9, " "*/*;q=0.8",
     "Accept-Language": "en-us",
     "Connection": "keep-alive",
@@ -29,7 +30,7 @@ CHROME_MOBILE = {
     "CriOS/67.0.3396.87 Mobile/15F79 Safari/604.1",
 }
 
-FIREFOX_MOBILE = {
+FIREFOX_MOBILE: Dict[str, str] = {
     "Accept": "text/html.application/xhtml+xml, application/xml;q=0.9, " "*/*;q=0.8",
     "Accept-Language": "en-us",
     "Connection": "keep-alive",
@@ -38,7 +39,7 @@ FIREFOX_MOBILE = {
     "Mobile/15F79 Safari/605.1.15",
 }
 
-SAFARI_MOBILE = {
+SAFARI_MOBILE: Dict[str, str] = {
     "Accept": "text/html.application/xhtml+xml, application/xml;q=0.9, " "*/*;q=0.8",
     "Accept-Language": "en-us",
     "Connection": "keep-alive",
