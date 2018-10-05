@@ -11,6 +11,7 @@ from collections import namedtuple
 
 import requests
 from bs4 import BeautifulSoup
+from requests.exceptions import ConnectionError
 
 from .headers import FIREFOX_LINUX
 from .log_init import setup_logging
@@ -278,6 +279,9 @@ def main():
         display_comics(chapters)
     except KeyboardInterrupt:
         print('\n\nProgram aborted by user. Exiting...\n')
+        exit()
+    except (ConnectionError, TimeoutError):
+        print("\nThe connection timed out...\n")
         exit()
 
 
