@@ -3,7 +3,7 @@ setup.py
 
 Setup for installing the package.
 """
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 import comic_snagger
 
@@ -20,8 +20,8 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     description="Python script for downloading comic book images and "
-                "converting them into a compressed comic book format. ("
-                "comic_snagger)",
+    "converting them into a compressed comic book format. ("
+    "comic_snagger)",
     install_requirements=[],
     entry_points="""
         [console_scripts]
