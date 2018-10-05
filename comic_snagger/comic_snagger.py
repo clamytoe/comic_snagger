@@ -36,7 +36,7 @@ def clear_screen():
     Clears the screen
     :return: None
     """
-    _ = os.system('cls' if os.name == 'nt' else 'clear')  # nosec
+    _ = os.system("cls" if os.name == "nt" else "clear")  # nosec
 
 
 def compress_comic(title_dir):
@@ -127,9 +127,7 @@ def display_series_choices(search_term, series):
         for i, comic in enumerate(series):
             print(f" [{i}] {comic.title}")
         try:
-            choice = int(
-                input(f"\nWhich one would you like to get? ")  # nosec
-            )
+            choice = int(input(f"\nWhich one would you like to get? "))  # nosec
             return series[choice]
         except (ValueError, IndexError):
             clear_screen()
@@ -176,9 +174,7 @@ def generate_command(link, directory):
     """
     num, ext = link.rsplit("/", 1)[1].split(".")
     image = (
-        f"{num.zfill(2)}.{ext}"
-        if int(num) < 10 and len(num) == 1
-        else f"{num}.{ext}"
+        f"{num.zfill(2)}.{ext}" if int(num) < 10 and len(num) == 1 else f"{num}.{ext}"
     )
     img = os.path.join(directory, image)
     return f'wget --no-verbose --show-progress -c {link} -O "{img}"'
@@ -278,7 +274,7 @@ def main():
         chapters = scrape_comics_found(issues)
         display_comics(chapters)
     except KeyboardInterrupt:
-        print('\n\nProgram aborted by user. Exiting...\n')
+        print("\n\nProgram aborted by user. Exiting...\n")
         exit()
     except (ConnectionError, TimeoutError):
         print("\nThe connection timed out...\n")
@@ -293,11 +289,9 @@ def print_description(desc):
     :return: None
     """
     for line in desc.split("\n"):
-        blurb = textwrap.fill(line,
-                              initial_indent='  ',
-                              subsequent_indent=' ',
-                              width=WIDTH
-                              )
+        blurb = textwrap.fill(
+            line, initial_indent="  ", subsequent_indent=" ", width=WIDTH
+        )
         print(f"{blurb}")
 
 

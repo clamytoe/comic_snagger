@@ -3,9 +3,9 @@ log_init.py
 
 Initializes logging for the project.
 """
-import os
 import json
 import logging.config
+import os
 
 
 def setup_logging(
