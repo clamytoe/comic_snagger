@@ -11,7 +11,7 @@ dependencies:
   - pytest=3.6.2
   - pytest-cov=2.5.1
   - python=3.6.6
-  - requests=2.19.1
+  - requests=2.20.1
   - pip:
     - bandit==1.4.0
     - black==18.6b4
